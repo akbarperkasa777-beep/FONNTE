@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Notifikasi WhatsApp</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Segoe UI",Roboto,Arial,sans-serif; background:#f4f7f6; margin:0; padding:32px 16px;}
+  .wrap{max-width:1000px; margin:0 auto;}
+  h1{color:#075E54; margin-bottom:4px;}
+  p.sub{color:#666; margin-top:0;}
+  table{width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.06);}
+  th,td{padding:12px 14px; text-align:left; font-size:.88rem; border-bottom:1px solid #eee;}
+  th{background:#075E54; color:#fff; font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  .badge{padding:3px 10px; border-radius:20px; font-size:.78rem; font-weight:600;}
+  .badge-success{background:#d4f5df; color:#146c37;}
+  .badge-failed{background:#fde3e3; color:#a12727;}
+  .badge-pending{background:#fff4d6; color:#8a6d00;}
+  .pesan-cell{max-width:260px; white-space:pre-line; color:#555;}
+  #empty{padding:24px; text-align:center; color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Laporan Notifikasi WhatsApp</h1>
+  <p class="sub">Status pengiriman notifikasi registrasi ke setiap user.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Nomor WhatsApp</th>
+        <th>Tanggal</th>
+        <th>Pesan</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="6" style="text-align:center; padding:20px;">Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+function badgeClass(status) {
+  if (status === 'success') return 'badge-success';
+  if (status === 'failed') return 'badge-failed';
+  return 'badge-pending';
+}
+function badgeLabel(status) {
+  if (status === 'success') return 'Terkirim';
+  if (status === 'failed') return 'Gagal';
+  return 'Pending';
+}
+
+async function loadLaporan() {
+  const tbody = document.getElementById('tbody');
+  try {
+    const res = await fetch('../api/laporan.php');
+    const json = await res.json();
+
+    if (!json.status || json.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" id="empty">Belum ada data registrasi.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = json.data.map((row, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${row.nama}</td>
+        <td>${row.no_hp}</td>
+        <td>${row.tanggal_kirim ?? row.tanggal_registrasi}</td>
+        <td class="pesan-cell">${row.pesan ? row.pesan.replace(/</g,'&lt;') : '-'}</td>
+        <td><span class="badge ${badgeClass(row.status_whatsapp)}">${badgeLabel(row.status_whatsapp)}</span></td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" id="empty">Gagal memuat laporan.</td></tr>';
+  }
+}
+
+loadLaporan();
+</script>
+</body>
+</html>
